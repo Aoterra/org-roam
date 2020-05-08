@@ -200,18 +200,22 @@ CHECKER is a org-roam-doctor checker instance."
   "Perform a check on Org-roam files to ensure cleanliness.
 If THIS-BUFFER, run the check only for the current buffer."
   (interactive "P")
-  (let ((existing-buffers (org-roam--get-roam-buffers))
-        files)
+  (let (files)
     (if (not this-buffer)
         (setq files (org-roam--list-all-files))
       (unless (org-roam--org-roam-file-p)
         (user-error "Not in an org-roam file"))
       (setq files (list (buffer-file-name))))
-    (save-window-excursion
+    (org-roam-doctor files org-roam-doctor--checkers)))
+
+(defun org-roam-doctor-start (files checkers)
+  "Perform checks on FILES using CHECKERS."
+  (save-window-excursion
+    (let ((existing-buffers (org-roam--get-roam-buffers)))
       (dolist (f files)
         (let ((buf (find-file-noselect f)))
           (with-current-buffer buf
-            (org-roam-doctor--check buf org-roam-doctor--checkers))
+            (org-roam-doctor--check buf checkers))
           (unless (memq buf existing-buffers)
             (save-buffer buf)
             (kill-buffer buf))))))
