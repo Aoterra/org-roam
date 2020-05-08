@@ -440,7 +440,7 @@ Examples:
                     ("^_" . "")  ;; remove starting underscore
                     ("_$" . "")))  ;; remove ending underscore
            (slug (-reduce-from #'cl-replace (strip-nonspacing-marks title) pairs)))
-      (s-downcase slug))))
+      (downcase slug))))
 
 ;;; Interactive Commands
 (defun org-roam--format-link-title (title)
@@ -463,9 +463,9 @@ Examples:
                        target))
      description)))
 
-(defun org-roam-insert (&optional prefix filter-fn description)
+(defun org-roam-insert (&optional lowercase filter-fn description)
   "Find an Org-roam file, and insert a relative org link to it at point.
-If PREFIX, downcase the title before insertion.
+If LOWERCASE, downcase the title before insertion.
 FILTER-FN is the name of a function to apply on the candidates
 which takes as its argument an alist of path-completions.
 If DESCRIPTION is provided, use this as the link label. See
@@ -485,7 +485,7 @@ If DESCRIPTION is provided, use this as the link label. See
                                                       :initial-input region-text))
          (description (or description region-text title))
          (target-file-path (cdr (assoc title completions)))
-         (link-description (org-roam--format-link-title (if prefix
+         (link-description (org-roam--format-link-title (if lowercase
                                                             (downcase description)
                                                           description))))
     (if (and target-file-path

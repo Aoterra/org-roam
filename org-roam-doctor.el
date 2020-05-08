@@ -72,14 +72,14 @@ AST is the org-element parse tree."
     (lambda (l)
       (when (equal "file" (org-element-property :type l))
         (let ((file (org-element-property :path l)))
-          (and (not (file-remote-p file))
-               (not (file-exists-p file))
-               (list (org-element-property :begin l)
-                     (format (if (org-element-lineage l '(link))
-                                 "Link to non-existent image file \"%s\"\
+          (or (file-exists-p file)
+              (file-remote-p file)
+               `(,(org-element-property :begin l)
+                 ,(format (if (org-element-lineage l '(link))
+                              "Link to non-existent image file \"%s\"\
  in link description"
-                               "Link to non-existent local file \"%s\"")
-                             file))))))))
+                            "Link to non-existent local file \"%s\"")
+                          file))))))))
 
 (defun org-roam-doctor--check (buffer checkers)
   "Check BUFFER for errors.
@@ -122,34 +122,36 @@ CHECKERS is the list of checkers used."
 
 (defun org-roam-doctor--replace-link ()
   "Replace the current link with a new link."
-  (unless (org-in-regexp org-link-bracket-re 1)
-    (user-error "No link at point"))
-  (let ((orig (buffer-string))
-        (p (point)))
-    (condition-case nil
-        (save-excursion
-          (delete-region (match-beginning 0) (match-end 0))
-          (org-roam-insert))
-      (quit (progn
-              (replace-buffer-contents orig)
-              (goto-char p))))))
+  (save-match-data
+    (unless (org-in-regexp org-link-bracket-re 1)
+      (user-error "No link at point"))
+    (let ((orig (buffer-string))
+          (p (point)))
+      (condition-case nil
+          (save-excursion
+            (replace-match "")
+            (org-roam-insert))
+        (quit (progn
+                (replace-buffer-contents orig)
+                (goto-char p)))))))
 
 (defun org-roam-doctor--replace-link-keep-label ()
   "Replace the current link with a new link, keeping the current link's label."
-  (unless (org-in-regexp org-link-bracket-re 1)
-    (user-error "No link at point"))
-  (let ((orig (buffer-string))
-        (p (point)))
-    (condition-case nil
-        (save-excursion
-          (let ((label (if (match-end 2)
-                           (match-string-no-properties 2)
-                         (org-link-unescape (match-string-no-properties 1)))))
-            (delete-region (match-beginning 0) (match-end 0))
-            (org-roam-insert nil nil label)))
-      (quit (progn
-              (replace-buffer-contents orig)
-              (goto-char p))))))
+  (save-match-data
+    (unless (org-in-regexp org-link-bracket-re 1)
+      (user-error "No link at point"))
+    (let ((orig (buffer-string))
+          (p (point)))
+      (condition-case nil
+          (save-excursion
+            (let ((label (if (match-end 2)
+                             (match-string-no-properties 2)
+                           (org-link-unescape (match-string-no-properties 1)))))
+              (replace-match "")
+              (org-roam-insert nil nil label)))
+        (quit (progn
+                (replace-buffer-contents orig)
+                (goto-char p)))))))
 
 (defun org-roam-doctor--remove-link ()
   "Unlink the text at point."
