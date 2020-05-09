@@ -196,17 +196,17 @@ CHECKER is a org-roam-doctor checker instance."
         (kill-buffer "*Org-roam-doctor Help*")))))
 
 ;;;###autoload
-(defun org-roam-doctor (&optional this-buffer)
+(defun org-roam-doctor (&optional checkall)
   "Perform a check on Org-roam files to ensure cleanliness.
-If THIS-BUFFER, run the check only for the current buffer."
+If CHECKALL, run the check only for the current buffer."
   (interactive "P")
   (let (files)
-    (if (not this-buffer)
+    (if (checkall)
         (setq files (org-roam--list-all-files))
       (unless (org-roam--org-roam-file-p)
         (user-error "Not in an org-roam file"))
       (setq files (list (buffer-file-name))))
-    (org-roam-doctor files org-roam-doctor--checkers)))
+    (org-roam-doctor-start files org-roam-doctor--checkers)))
 
 (defun org-roam-doctor-start (files checkers)
   "Perform checks on FILES using CHECKERS."
